@@ -23,6 +23,10 @@ gmm <- function(X, Iter) {
             Gamma[k,] <- Gamma[k,]/tmp
         }
 
+        PrevMiu <- Miu
+        PrevSigma <- Sigma
+        PrevAlpha <- Alpha
+
         for (k in 1:M) {
             Nk          <- sum(Gamma[k,])
             Miu[k]      <- sum(Gamma[k,]*X)/Nk
@@ -31,6 +35,14 @@ gmm <- function(X, Iter) {
         }
 
         cat('Iteration',step,'Miu',Miu,'Sigma',Sigma,'Alpha',Alpha,'\n')
+
+        vec_norm <- function(x) sqrt(sum(x^2))
+
+        if (vec_norm(Miu-PrevMiu)<eps &&
+            vec_norm(Sigma-PrevSigma)<eps &&
+            vec_norm(Alpha-PrevAlpha)<eps) {
+            break
+        }
     }
 }
 
