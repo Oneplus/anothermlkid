@@ -1,11 +1,11 @@
 #### DESCRIPTION
 This is a small demo for Gaussian Mixture Model.
 
-10,000 instance is drawn from a mixture gaussian distribution namely, p(x)=0.7N(-10,2)+0.3N(5,3), and the histogram is plot below:
+10,000 instance is drawn from a mixture gaussian distribution namely, __p(x)=0.7N(-10,2)+0.3N(5,3)__, and the histogram is plot below:
 
 ![hist](https://raw.github.com/Oneplus/anothermlkid/master/gmm/gmm_sample_hist.png)
 
-The log is shown blog
+A example of log is shown blow:
 ```
 Iteration 1 Miu -6.022416 -4.908002 Sigma 7.116153 7.319557 Alpha 0.5297767 0.4702233 
 Iteration 1 Miu -0.3137375 -7.26421 Sigma 6.450846 6.64926 Alpha 0.2402621 0.7597379 
