@@ -34,13 +34,12 @@ gmm <- function(X, Iter) {
     }
 }
 
-
 main <- function() {
     N <- 10000
     inst <- gmm_sample(N)
     #print(instances)
 
-    png("test.png")
+    png("plot.png")
     hist(inst[1,], breaks=100)
 
     gmm(inst[1,],30)
