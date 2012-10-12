@@ -30,7 +30,7 @@ gmm <- function(X, Iter) {
             Alpha[k]    <- Nk/N
         }
 
-        cat('step',step,'miu',Miu,'sigma',Sigma,'alpha',Alpha,'\n')
+        cat('Iteration',step,'Miu',Miu,'Sigma',Sigma,'Alpha',Alpha,'\n')
     }
 }
 
@@ -39,7 +39,7 @@ main <- function() {
     inst <- gmm_sample(N)
     #print(instances)
 
-    png("plot.png")
+    png("gmm_sample_hist.png")
     hist(inst[1,], breaks=100)
 
     gmm(inst[1,],30)
