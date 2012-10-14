@@ -3,7 +3,7 @@ This is a small demo for Gaussian Mixture Model.
 
 10,000 instance is drawn from a mixture gaussian distribution namely, __p(x)=0.7N(-10,2)+0.3N(5,3)__, and the histogram is plot below:
 
-![hist](https://raw.github.com/Oneplus/anothermlkid/master/gmm/gmm_sample_hist.png)
+![hist](https://raw.github.com/Oneplus/anothermlkid/master/gmm/image/gmm_sample_hist.png)
 
 A example of log is shown blow:
 ```
