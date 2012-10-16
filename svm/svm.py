@@ -6,7 +6,7 @@ import numpy as np
 
 def main():
     try:
-        fp=open("data/head_scale.dat", "r")
+        fp=open("data/heart_scale.dat", "r")
     except:
         print >> sys.stderr, "Failed to open file"
         return
@@ -17,7 +17,7 @@ def main():
 
     for line in fp:
         buff = line.strip().split()
-        raw_data.append( buff[0], [sep.split(":") for sep in buff[1:]] )
+        raw_data.append( (buff[0], [sep.split(":") for sep in buff[1:]]) )
 
     for raw_inst in raw_data:
         y = int(raw_inst[0])
@@ -30,7 +30,7 @@ def main():
             if aid not in attrs:
                 attrs[aid] = len(attrs) + 1
 
-    L = len(attrs)
+    L = (len(attrs) + 1)
 
     X = []
     Y = []
@@ -48,7 +48,31 @@ def main():
 
     N = len(X)
 
-    alpha = [0.] * N
+    alpha = np.array([0.] * N)
+
+    num_changed = 0
+    examine_all = 1
+
+    def evaluate(i):
+        pass
+
+    def examine_example(i):
+        assert (i >= 0 and i < N)
+        y = Y[i]
+        alphai = alpha[i]
+
+        def getE(i):
+            pass
+
+        ei = getE(i)
+
+
+    while num_changed > 0 or examine_all:
+        num_changed = 0
+
+        if examine_all:
+            for i in xrange(N):
+                num_changed += examine_example(i)
 
 
 if __name__=="__main__":
