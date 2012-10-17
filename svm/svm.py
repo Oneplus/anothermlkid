@@ -49,21 +49,23 @@ def main():
 
     alpha = np.array([0.] * N)
 
-    num_changed = 0
+    changed = 0
     examine_all = True
 
     kernel = None
 
-    if opt.kernel   == "LINEAR":
-        kernel = lambda(u, v): np.vdot(u, v)
-    elif opt.kerenl == "RBF":
-        kernel = lambda(u,v): math.exp(-np.vdot(u-v,u-v)/sigma)
+    # for test
+    if True:
+        kernel = lambda u,v: np.vdot(u, v)
+    elif False:
+        kernel = lambda u,v: math.exp(-np.vdot(u-v,u-v)/sigma)
 
     def getE(i):
-        return np.vdot(alpha, X[i])-Y[i]
+        return sum([alpha[j]*np.vdot(X[j], X[i]) for j in xrange(N)])-Y[i]
 
-    b=0.
-    C=1.
+    b=.0
+    C=.05
+    tol=1e-4
 
     max_passes = 10
     max_iter   = 10000
@@ -86,12 +88,15 @@ def main():
 
                 L=0.; H=C;
 
+                ai = alpha[i]
+                aj = alpha[j]
+
                 if Y[i] == Y[j]:
-                    L=max(0., alpha[i]+alpha[j]-C)
-                    H=min(C, alpha[i]+alpha[j])
+                    L=max(0., ai+aj-C)
+                    H=min(C, ai+aj)
                 else:
-                    L=max(0., alpha[j]-alpha[i])
-                    H=min(C, C+alpha[j]-alpha[i])
+                    L=max(0., aj-ai)
+                    H=min(C, C+aj-ai)
 
                 if abs(L-H)<1e-4:
                     continue
@@ -105,6 +110,7 @@ def main():
                 new_aj = L if new_aj<L else new_aj
                 if abs(new_aj-aj)<1e-4:
                     continue
+
                 alpha[j] = new_aj
 
                 new_ai = ai + Y[i]*Y[j]*(aj-new_aj)
@@ -122,16 +128,17 @@ def main():
                 if new_aj>.0 and new_aj<C:
                     b=bj
 
-                chanaged += 1
+                changed += 1
 
         it += 1
 
+        print it
         if changed == 0:
             passes += 1
         else:
             passes = 0
 
-
+    print >> sys.stderr, "Training is done."
 
 if __name__=="__main__":
     main()
