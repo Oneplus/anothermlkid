@@ -189,8 +189,6 @@ def main():
 
         box = [-3.,-3.,3.,3.]
 
-        print w
-
         def inbox(p):
             return (p[0]>=box[0] and
                     p[0]<=box[2] and
