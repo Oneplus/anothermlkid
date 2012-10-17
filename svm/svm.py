@@ -2,34 +2,32 @@
 
 import sys
 import numpy as np
+import matplotlib.pyplot as plot
 
-def main():
-    try:
-        fp=open("data/heart_scale.dat", "r")
-    except:
-        print >> sys.stderr, "Failed to open file"
-        return
-
-    attrs    = {}
-    labels   = {}
+def read_in_instances( fp, attrs, labels, append=False ):
+    """
+    read instances from file, the format of file is like this
+    [class] [aid:value] ...
+    """
     raw_data = []
 
     for line in fp:
         buff = line.strip().split()
         raw_data.append( (buff[0], [sep.split(":") for sep in buff[1:]]) )
 
-    for raw_inst in raw_data:
-        y = int(raw_inst[0])
-        if y not in labels:
-            labels[y] = len(labels) + 1
+    if append:
+        for raw_inst in raw_data:
+            y = int(raw_inst[0])
+            if y not in labels:
+                labels[y] = len(labels) + 1
 
-        x = raw_inst[1]
-        for xi in x:
-            aid = int(xi[0])
-            if aid not in attrs:
-                attrs[aid] = len(attrs) + 1
+            x = raw_inst[1]
+            for xi in x:
+                aid = int(xi[0])
+                if aid not in attrs:
+                    attrs[aid] = len(attrs) + 1
 
-    L = (len(attrs) + 1)
+    L = len(attrs)
 
     X = []
     Y = []
@@ -40,32 +38,38 @@ def main():
         x = [0.] * L
         for xi in raw_inst[1]:
             aid, value = int(xi[0]), float(xi[1])
-            x[aid] = value
+            x[aid - 1] = value
 
-        X.append( np.array(x) )
-        Y.append( y )
+        if aid in attrs and y in labels:
+            X.append( np.array(x) )
+            Y.append( y )
+        else:
+            print >> sys.stderr, "Discard instance %s" % X
 
+    return X, Y
+
+def evaluate( X, Y, alpha, N, b, kernel, x):
+    """
+    @param  X       the instances
+    @param  Y       the class
+    @param  N       number of instances
+    @param  b       
+    @param  kernel  the kernel function
+    @param  alpha   the alpha
+    @param  x       the instance to be evaluate
+
+    @return f(x)=w'x+b=\sum_j a_j*Y_j*<X_j,X_i>+b
+    """
+
+    return sum([alpha[j]*Y[j]*kernel(X[j], x) for j in xrange(N)])+b
+
+def train( X, Y, tol, C, kernel ):
+    b=.0
     N = len(X)
-
     alpha = np.array([0.] * N)
 
-    changed = 0
-    examine_all = True
-
-    kernel = None
-
-    # for test
-    if True:
-        kernel = lambda u,v: np.vdot(u, v)
-    elif False:
-        kernel = lambda u,v: math.exp(-np.vdot(u-v,u-v)/sigma)
-
-    def getE(i):
-        return sum([alpha[j]*np.vdot(X[j], X[i]) for j in xrange(N)])-Y[i]
-
-    b=.0
-    C=.05
-    tol=1e-4
+    def error(i):
+        return evaluate( X, Y, alpha, N, b, kernel, X[i]) - Y[i]
 
     max_passes = 10
     max_iter   = 10000
@@ -75,7 +79,7 @@ def main():
         changed = 0
 
         for i in xrange(N):
-            Ei = getE(i)
+            Ei = error(i)
 
             # if this data point violate the KKT condition
             if ((Y[i]*Ei<-tol and alpha[i]<C) or
@@ -84,7 +88,7 @@ def main():
                 while j == i:
                     j = np.random.randint(0, N, size=1)
 
-                Ej = getE(j)
+                Ej = error(j)
 
                 L=0.; H=C;
 
@@ -118,27 +122,99 @@ def main():
 
                 bi=(b-Ei-Y[i]*(new_ai-ai)*kernel(X[i],X[i])
                         -Y[j]*(new_aj-aj)*kernel(X[i],X[j]))
-                bj=(b-Ej-Y[j]*(new_ai-ai)*kernel(X[i],X[j])
+                bj=(b-Ej-Y[i]*(new_ai-ai)*kernel(X[i],X[j])
                         -Y[j]*(new_aj-aj)*kernel(X[j],X[j]))
-
-                b=.5*(bi+bj)
 
                 if new_ai>.0 and new_ai<C:
                     b=bi
-                if new_aj>.0 and new_aj<C:
+                elif new_aj>.0 and new_aj<C:
                     b=bj
+                else:
+                    b=.5*(bi+bj)
 
                 changed += 1
 
         it += 1
 
-        print it
         if changed == 0:
             passes += 1
         else:
             passes = 0
 
     print >> sys.stderr, "Training is done."
+
+    sv_x = []; sv_y = []; sv_alph = []
+    for i in xrange(N):
+        ev = evaluate(X, Y, alpha, N, b, kernel, X[i])*Y[i]
+        if alpha[i] < C and alpha[i] > 0.:
+            sv_x.append( X[i] )
+            sv_y.append( Y[i] )
+            sv_alph.append( alpha[i] )
+
+    return (sv_x, sv_y, sv_alph, b)
+
+def main():
+    try:
+        fp=open("data/simple.train.dat", "r")
+    except:
+        print >> sys.stderr, "Failed to open file"
+        return
+
+    attrs    = {}
+    labels   = {}
+
+    X, Y = read_in_instances( fp, attrs, labels, True )
+
+    kernel = None
+
+    # for test
+    if True:
+        kernel = lambda u,v: np.vdot(u, v)
+    elif False:
+        kernel = lambda u,v: math.exp(-np.vdot(u-v,u-v)/sigma)
+
+    N = len(X)
+    sv_x, sv_y, sv_alph, b = train( X, Y, 1e-4, 1., kernel )
+
+    M = len(sv_x)
+
+    if True:
+        plot.xlim([-5.,5.])
+        plot.ylim([-5.,5.])
+
+        plot.plot([X[i][0] for i in xrange(N) if Y[i]==-1],
+                [X[i][1] for i in xrange(N) if Y[i]==-1],
+                'bx',
+                [X[i][0] for i in xrange(N) if Y[i]==1],
+                [X[i][1] for i in xrange(N) if Y[i]==1],
+                'r+',
+                [sv_x[i][0] for i in xrange(M) if sv_y[i]==-1],
+                [sv_x[i][1] for i in xrange(M) if sv_y[i]==-1],
+                'y^',
+                [sv_x[i][0] for i in xrange(M) if sv_y[i]==1],
+                [sv_x[i][1] for i in xrange(M) if sv_y[i]==1],
+                'g^')
+
+        plot.show()
+
+    try:
+        fp=open("data/simple.test.dat", "r")
+    except:
+        print >> sys.stderr, "Failed to open file"
+
+    Xt, Yt = read_in_instances( fp, attrs, labels, False )
+
+    ac = 0
+    for i in xrange(len(Xt)):
+        y = evaluate(sv_x, sv_y, sv_alph, len(sv_x), b, kernel, Xt[i])
+        y = 1 if y > 0 else -1
+
+        print "+1" if y > 0 else "-1"
+
+        if y == Yt[i]:
+            ac += 1
+
+    print "accuracy=%.2lf%%" % (float(ac)/len(Xt)*100)
 
 if __name__=="__main__":
     main()
