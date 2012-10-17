@@ -174,13 +174,38 @@ def main():
         kernel = lambda u,v: math.exp(-np.vdot(u-v,u-v)/sigma)
 
     N = len(X)
-    sv_x, sv_y, sv_alph, b = train( X, Y, 1e-4, 1., kernel )
+    sv_x, sv_y, sv_alph, b = train( X, Y, 1e-4, 2., kernel )
 
     M = len(sv_x)
 
     if True:
         plot.xlim([-5.,5.])
         plot.ylim([-5.,5.])
+
+        w = sum(np.transpose(
+            np.array(sv_alph)
+                *np.array(sv_y)
+                *np.transpose(np.array(sv_x))))
+
+        box = [-3.,-3.,3.,3.]
+
+        print w
+
+        def inbox(p):
+            return (p[0]>=box[0] and
+                    p[0]<=box[2] and
+                    p[1]>=box[1] and
+                    p[1]<=box[3])
+
+        x00=box[0]; x01=(-b-w[0]*x00)/w[1]
+        x10=box[2]; x11=(-b-w[0]*x10)/w[1]
+        x21=box[1]; x20=(-b-w[1]*x21)/w[0]
+        x31=box[3]; x30=(-b-w[1]*x31)/w[0]
+
+        line1, line2, = [p for p in [(x00, x01),
+            (x10,x11),
+            (x20,x21),
+            (x30,x31)] if inbox(p)]
 
         plot.plot([X[i][0] for i in xrange(N) if Y[i]==-1],
                 [X[i][1] for i in xrange(N) if Y[i]==-1],
@@ -193,7 +218,10 @@ def main():
                 'y^',
                 [sv_x[i][0] for i in xrange(M) if sv_y[i]==1],
                 [sv_x[i][1] for i in xrange(M) if sv_y[i]==1],
-                'g^')
+                'g^',
+                [line1[0], line2[0]],
+                [line1[1], line2[1]],
+                'k-')
 
         plot.show()
 
