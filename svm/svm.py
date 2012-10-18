@@ -4,10 +4,16 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plot
 
-def read_in_instances( fp, attrs, labels, append=False ):
+def read_instances( fp, attrs, labels, append=False ):
     """
     read instances from file, the format of file is like this
     [class] [aid:value] ...
+    
+    @param  fp      the file handle
+    @param  attrs   the attributes lexicon
+    @param  labels  the labels lexicon
+    @param  append  whether append the attribute and label to the lexicon
+    @retunr X, Y    the instance vector and class vector
     """
     raw_data = []
 
@@ -64,6 +70,16 @@ def evaluate( X, Y, alpha, N, b, kernel, x):
     return sum([alpha[j]*Y[j]*kernel(X[j], x) for j in xrange(N)])+b
 
 def train( X, Y, tol, C, kernel ):
+    """
+    Train the SVM Model with tolerance and slack value C
+
+    @param  X       the instances vector
+    @param  Y       the class vector
+    @param  tol     tolerance
+    @param  C
+    @param  kernel  the kernel function
+    @return sv_x, sv_y, sv_alph support vector
+    """
     b=.0
     N = len(X)
     alpha = np.array([0.] * N)
@@ -163,7 +179,7 @@ def main():
     attrs    = {}
     labels   = {}
 
-    X, Y = read_in_instances( fp, attrs, labels, True )
+    X, Y = read_instances( fp, attrs, labels, True )
 
     kernel = None
 
@@ -228,7 +244,7 @@ def main():
     except:
         print >> sys.stderr, "Failed to open file"
 
-    Xt, Yt = read_in_instances( fp, attrs, labels, False )
+    Xt, Yt = read_instances( fp, attrs, labels, False )
 
     ac = 0
     for i in xrange(len(Xt)):
