@@ -16,4 +16,5 @@ Following components has been implemented:
 * ![Use K-Means algorithm to classify data drawn from two gaussian](https://github.com/Oneplus/anothermlkid/tree/master/k-means)
 * ![Use KNN to estimate probability distribution and classify handwritten data](https://github.com/Oneplus/anothermlkid/tree/master/knn)
 * ![Use parzen window to estimate probability distribution](https://github.com/Oneplus/anothermlkid/tree/master/parzen)
-* ![A SVM classifier optimize with simplified SMO and its illustraction on 2-Dimension data](https://github.com/Oneplus/anothermlkid/tree/master/svm)
+* ![A SVM classifier optimized with simplified SMO and its illustraction on 2-Dimension data](https://github.com/Oneplus/anothermlkid/tree/master/svm)
+* ![A Logistic Regression classifier optimized with newton-raphson algorithm](https://github.com/Oneplus/anothermlkid/tree/master/logres)
