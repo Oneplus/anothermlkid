@@ -50,7 +50,15 @@ iterate_gibbs_sampler<-function(Sampler) {
         posterior_pi<-rep(0.,categories)
 
         for (category_index in 1:categories) {
+            num<-sum(word_counts[category_index, ])+Sampler$hyp_pi[category_index]-1.
 
+            if (num != 0.) {
+                den<-sum(word_counts)+sum(Sampler$hyp_pi)-1.
+
+                label_factor<-num/den
+                word_factor<-sum(Sampler$thetas[category_index]*word_counts[category_index])
+                posterior_pi[category_index]<-log(label_factor)+word_factor
+            }
         }
     }
 }
