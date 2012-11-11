@@ -11,25 +11,28 @@ multinomial_sample<-function(n, distribution) {
 }
 
 sum_log_array<-function(a) {
-    log(sum(exp(a[a != -Inf])))
+    log(sum(exp(a[a > -Inf]-max(a[a>-Inf]))))+max(a[a>-Inf])
+    #log(sum(exp(a[a > -Inf])))
 }
 
 initialize_gibbs_sampler<-function(Sampler) {
     # sample parameter for document label multinorm distribution
     pi<-log(rdirichlet(1, Sampler$hyp_pi))
 
-    print("pi"); print(pi)
     categories<-Sampler$categories
     documents<-Sampler$documents
 
     thetas<-matrix(rep(0., length(Sampler$hyp_thetas)), nrow=categories)
-    print("thetas"); print(thetas)
     # for each category in categories, sample
     for (category_index in 1:categories) {
         thetas[category_index, ]<-log(rdirichlet(1, Sampler$hyp_thetas[category_index, ]))
     }
 
     labels<-multinomial_sample(documents, pi)
+
+    cat("\ninit.pi:\n");      print(pi)
+    cat("\ninit.thetas:\n");  print(thetas)
+    cat("\ninit.labels\n");   print(labels)
 
     return( list(thetas=thetas, labels=labels) )
 }
@@ -44,9 +47,14 @@ iterate_gibbs_sampler<-function(Sampler) {
 
     for (category_index in 1:categories) {
         category_counts[category_index]<-sum(category_index == Sampler$labels)
-        words_counts[category_index,]<-colSums(Sampler$corpus[category_index == Sampler$labels,,drop=FALSE])
+        words_counts[category_index,]<-colSums(
+                        Sampler$corpus[category_index == Sampler$labels,,drop=FALSE])
     }
 
+    cat("\nsample.category counts\n");   print(category_counts)
+    cat("\nsample.words counts\n");      print(words_counts)
+
+    # calculate P(Lj|...)
     for (document_index in 1:documents) {
         category_index<-Sampler$labels[document_index]
         words_counts[category_index]<-words_counts[category_index]-Sampler$corpus[document_index]
@@ -67,7 +75,10 @@ iterate_gibbs_sampler<-function(Sampler) {
             }
         }
 
+        #cat("\nsample.documents.pi\n");     print(posterior_pi);
+        #cat("\nsum\n");                     print(sum_log_array(posterior_pi));
         posterior_pi<-posterior_pi-sum_log_array(posterior_pi)
+        #cat("\nsample.documents.pi\n");     print(posterior_pi);
         new_category<-multinomial_sample(1, posterior_pi)
         Sampler$labels[document_index]<-new_category
         words_counts[new_category]<-words_counts[new_category]+Sampler$corpus[document_index,]
@@ -110,16 +121,13 @@ estimate_labels<-function(Sampler, iterations, burn_in, lag) {
                 lag_counter<-lag_counter-1
             } else {
                 lag_counter<-lag
-                print("Sampler$thetas");    print(Sampler$thetas);
-                print("Sampler$labels");    print(Sampler$labels);
-
-                estimates<-estimate+Sampler$labels
+                estimates<-estimates+Sampler$labels
                 iteration<-iteration+1
             }
         }
     }
 
-    estimates/iterations
+    return(estimates/iterations)
 }
 
 generate_corpus<-function(categories, vocabulary, documents) {
@@ -134,7 +142,7 @@ generate_corpus<-function(categories, vocabulary, documents) {
 
     for (document_index in 1:documents) {
         category<-multinomial_sample(1, pi)
-        labels<-rbind(labels, category)
+        labels<-cbind(labels, category)
         corpus<-rbind(corpus, t(rmultinom(1, vocabulary*100, thetas[category, ])))
     }
 
@@ -151,10 +159,6 @@ main<-function() {
 
     package<-generate_corpus(categories, vocabulary, documents)
 
-    #print(exp(package$thetas))
-    print(package$corpus)
-    #print(package$labels)
-
     hyp_pi<-rep(1, categories)
     hyp_thetas<-matrix(rep(1, categories*vocabulary), nrow=categories)
 
@@ -166,7 +170,7 @@ main<-function() {
                 hyp_thetas=hyp_thetas)
 
     estimates<-estimate_labels(Sampler, 2, 5, 2)
-    print(estimates)
+    cat("estimate");    print(estimates)
 }
 
 main()
