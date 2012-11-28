@@ -15,7 +15,7 @@ main<-function() {
     X<-data()
     N<-length(X[,1])
 
-    png("test.png")
+    png("image/simple_pca_demo.png")
     plot(X[,1], X[,2], xlim=c(0.,3.5),ylim=c(0.,3.5))
 
     XAdj<-t(t(X)-colMeans(X))
@@ -26,10 +26,11 @@ main<-function() {
 
     print(vec)
 
+    # get the best direction
     proj<-vec[, order(lam, decreasing=T)[1]]
-
     Xp<-X%*%proj
-    print(Xp)
+
+    lines(c(0.,3.5), c(0.,3.5)*proj[1]/proj[2])
 }
 
 main()
