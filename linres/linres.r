@@ -25,7 +25,7 @@ main<-function() {
 
     M<-10
     outliner<-sample(1:100, M)
-    Y[outliner]<-sapply(outliner, function(i) rnorm(1, .5*X[i,1]+1., 5.))
+    Y[outliner]<-sapply(outliner, function(i) rnorm(1, .5*X[i,1]+1., 8.))
 
     w<-linres_mle(X, Y)
 
