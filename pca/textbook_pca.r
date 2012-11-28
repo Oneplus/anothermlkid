@@ -19,18 +19,21 @@ main<-function() {
     plot(X[,1], X[,2], xlim=c(0.,3.5),ylim=c(0.,3.5))
 
     XAdj<-t(t(X)-colMeans(X))
+    print(XAdj)
 
     S<-cov(XAdj)
     lam<-eigen(S)$values
     vec<-eigen(S)$vectors
 
-    print(vec)
-
     # get the best direction
     proj<-vec[, order(lam, decreasing=T)[1]]
+
+    print(lam)
+    print(vec)
+    print(order(lam, decreasing=T))
     Xp<-X%*%proj
 
-    lines(c(0.,3.5), c(0.,3.5)*proj[1]/proj[2])
+    lines(c(0.,3.5), c(0.,3.5)*proj[1]/(-proj[2]))
 }
 
 main()
