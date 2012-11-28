@@ -18,3 +18,4 @@ Following components has been implemented:
 * ![Use parzen window to estimate probability distribution](https://github.com/Oneplus/anothermlkid/tree/master/parzen)
 * ![A SVM classifier optimized with simplified SMO and its illustraction on 2-Dimension data](https://github.com/Oneplus/anothermlkid/tree/master/svm)
 * ![A Logistic Regression classifier optimized with newton-raphson algorithm](https://github.com/Oneplus/anothermlkid/tree/master/logres)
+* ![A PCA in textbook](https://github.com/Oneplus/anothermlkid/tree/master/pca)

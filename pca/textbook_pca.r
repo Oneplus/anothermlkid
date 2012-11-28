@@ -15,7 +15,7 @@ main<-function() {
     X<-data()
     N<-length(X[,1])
 
-    png("image/simple_pca_demo.png")
+    png("image/textbook_pca_demo.png")
     plot(X[,1], X[,2], xlim=c(0.,3.5),ylim=c(0.,3.5))
 
     XAdj<-t(t(X)-colMeans(X))
