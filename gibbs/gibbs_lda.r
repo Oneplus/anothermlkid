@@ -1,3 +1,7 @@
+site<-"http://cran.r-project.org"
+if (!require("stats"))  { install.package("stats", repos=site) }
+if (!require("BGSIMD")) { install.packages("BGSIMD", repos=site) }
+
 library(stats)
 library(BGSIMD)
 
