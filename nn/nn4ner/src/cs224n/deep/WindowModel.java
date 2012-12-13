@@ -145,9 +145,9 @@ public class WindowModel {
     private SimpleMatrix sigmoidMatrix(SimpleMatrix x) {
         int numRows = x.numRows();
         int numCols = x.numCols();
-        
+
         SimpleMatrix z = new SimpleMatrix(numRows, numCols);
-        
+
         for (int i = 0; i < numRows; ++ i) {
             for (int j = 0; j < numCols; ++ j) {
                 z.set(i, j, sigmoid(x.get(i, j)));
@@ -225,6 +225,8 @@ public class WindowModel {
                     L.insertIntoThis(index, 0, dJ_dL.extractMatrix(j * wordSize, (j + 1) * wordSize, 0, 1).scale(alpha));
                 }
             }
+
+            test(FeatureFactory.testData);
         }
         
         System.out.println("Training done.");

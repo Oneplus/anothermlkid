@@ -8,10 +8,11 @@ import org.ejml.simple.SimpleMatrix;
 public class NER {
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 5) {
+        if (args.length < 7) {
             System.out
                     .println("USAGE: java -cp classes NER ./data/train ./data/dev" 
-                            + " [Regularization] [Iterations] [Rate]");
+                            + " [window size] [hidden size]"
+                            + " [regularization] [iterations] [rate]");
             return;
         }
 
@@ -29,11 +30,12 @@ public class NER {
         System.err.println("Vocabulary loaded.");
 
         // initialize model
-        WindowModel model = new WindowModel(5,
-                100, 
-                Double.parseDouble(args[2]),
+        WindowModel model = new WindowModel(
+                Integer.parseInt(args[2]),
                 Integer.parseInt(args[3]),
-                Double.parseDouble(args[4]));
+                Double.parseDouble(args[4]),
+                Integer.parseInt(args[5]),
+                Double.parseDouble(args[6]));
 
         model.initWeights();
 

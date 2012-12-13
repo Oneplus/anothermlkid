@@ -16,8 +16,10 @@ this model achieve an F1-score of 0.7164
 
 ## Complie And Run
 
+```
 $ ant
 $ java -cp classes:extlib/ejml.jar NER ./data/train ./data/dev [regular] [iteration] [rate]
+```
 
 ## Original Instruction (README.txt)
 
@@ -34,10 +36,15 @@ Once you have run configuration you
 ANT:
 we've provided a basic build.xml file for use with ant.  Just call:
 
+```
 $ ant
+```
 
 COMMAND LINE:
 If you want to develop on the command line, use the following commands:
+
+```
 $ mkdir classes
 $ ant
 $ java -cp classes -Xmx1G NER ../data/train ../data/dev -print
+```
