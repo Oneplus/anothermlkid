@@ -15,6 +15,11 @@ multinomial.sample<-function(N, distribution) {
     max.col(t(rmultinom(N, 1, exp(distribution))))
 }
 
+# calculate log(exp{a1}+exp{a2}+...+exp{an})
+sum.log.array<-function(a) {
+    log(sum(exp(a[a > -Inf]-max(a[a>-Inf]))))+max(a[a>-Inf])
+}
+
 # Initialize Gibbs Sampler, this process includes
 #   - generating a vector of phi \in R^{C}
 #   - 
@@ -61,13 +66,27 @@ iterate.Gibbs.sampling<-function(C, V, D, documents, labels, thetas) {
         # erase this document
         word_counts[category, ] <- 
             word_counts[category, ] - documents[document_index, ]
+        category_counts[category] <- category_counts[category] - 1
 
         posterior_phi <- rep(1., C)
 
         for (category_index in 1:C) {
 
-            num <- sum(word_counts[category_index, ]) + hyper_phi[category_index] - 1
+            # log \Mul_{i=1}^{V} p_i^{\gamma_\theta i}
+            num <- sum(word_counts[category_index, ]) + hyp_phi[category_index] - 1.
+
+            if (num != 0) {
+                den <- sum(word_counts) + sum(hyp_phi) - 1.
+                label_factor <- num / den
+                # log \Mul_{i=1}^{V} p_i
+                word_factor <- 
+                    sum(thetas[category_index, ] * word_counts[category_index, ])
+
+                posterior_phi[category_index] <- log(label_factor) + word_factor
+            }
         }
+
+        posterior_phi <- posterior_phi - sum.log.array(posterior_phi)
     }
 }
 
