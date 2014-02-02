@@ -22,6 +22,7 @@ def logsumexp(a):
     max_element = a.max()
     return max_element + log(exp(a - max_element).sum())
 
+#@profile
 def expectation(model, instance):
     '''
     Perform forward-backward algorithm to calculate the second component
@@ -87,6 +88,7 @@ def L2SGD(model,
         for index, instance in enumerate(instances):
             # first need to clear the cache
             model.destroy_score_cache()
+            model.build_instance(instance)
 
             for k, v in expectation(model, instance).iteritems():
                 model.w[k] -= v * _gamma
@@ -100,5 +102,8 @@ def L2SGD(model,
 
             if index % 1000 == 0:
                 print >> sys.stderr, "TRACE : %d instances is trained" % index
+
+            instance.features_table = None
+            instance.correct_features = None
 
         print >> sys.stderr, "TRACE : Parameters norm %f" % norm(model.w)

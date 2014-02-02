@@ -14,8 +14,6 @@ def evaluate(model, eval_file):
     fp = open(eval_file, "r")
     instances = [Instance(c) for c in fp.read().strip().split("\n\n")]
 
-    model.preprocess(instances, False)
-
     nr_correct = 0
     nr_tags = 0
     for instance in instances:

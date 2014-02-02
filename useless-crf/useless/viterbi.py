@@ -11,6 +11,7 @@ def viterbi(model, instance):
     '''
     '''
     model.destroy_score_cache()
+    model.build_instance(instance, False)
     g0, g = model.build_score_cache(instance)
 
     L = len(instance)

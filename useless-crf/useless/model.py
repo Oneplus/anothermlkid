@@ -52,60 +52,60 @@ class crfl2sgdmodel(object):
         self._g = zeros((L, T, T), dtype=float)
 
         f = instance.features_table
-        for i in xrange(L):
-            if i == 0:
-                for j in xrange(T):
-                    self._g0[j] = self.w[f[i,None,j]].sum()
-            else:
-                for j in xrange(T):
-                    for k in xrange(T):
-                        self._g[i,j,k] = self.w[f[i,j,k]].sum()
+
+        for j in xrange(T):
+            self._g0[j] = self.w.take(f[0,None,j], axis=0).sum()
+
+        for i in xrange(1, L):
+            for k in xrange(T):
+                self._g[i,0,k] = self.w.take(f[i,0,k], axis=0).sum()
+                for j in xrange(1, T):
+                   self._g[i,j,k] = self._g[i,0,k] - self.w[A*T+ k] + self.w[(A+j)*T + k]
 
         return (self._g0, self._g)
 
-    def preprocess(self, instances, train=True):
-        if train:
-            for instance in instances:
-                for item in instance.raw:
-                    tag, attrs = item
+    def preprocess(self, instances):
+        for instance in instances:
+            for item in instance.raw:
+                tag, attrs = item
 
-                    if tag not in self.tags:
-                        self.tags[tag] = len(self.tags)
+                if tag not in self.tags:
+                    self.tags[tag] = len(self.tags)
 
-                    for attr in attrs:
-                        if attr not in self.attrs:
-                            self.attrs[attr] = len(self.attrs)
+                for attr in attrs:
+                    if attr not in self.attrs:
+                        self.attrs[attr] = len(self.attrs)
 
-            self.nr_tags = len(self.tags)
-            self.nr_attrs = len(self.attrs)
-            self.nr_dim = (self.nr_tags + self.nr_attrs) * self.nr_tags
-            self.w = zeros(self.nr_dim, dtype=float)
+        self.nr_tags = len(self.tags)
+        self.nr_attrs = len(self.attrs)
+        self.nr_dim = (self.nr_tags + self.nr_attrs) * self.nr_tags
+        self.w = zeros(self.nr_dim, dtype=float)
+
+    def build_instance(self, instance, train=True):
+        instance.features_table = f = {}
+        instance.correct_features = F = defaultdict(int)
 
         T = self.nr_tags
         A = self.nr_attrs
 
-        for instance in instances:
-            instance.features_table = f = {}
-            instance.correct_features = F = defaultdict(int)
 
-            previous_idx = None
-            for i, item in enumerate(instance.raw):
-                tag, attrs = item
-                if i == 0:
-                    for k in xrange(T):
-                        f[i,None,k] = [self.attrs[attr] * T + k
-                                       for attr in attrs if attr in self.attrs]
-                else:
-                    for j in xrange(T):
-                        for k in xrange(T):
-                            f[i,j,k] = [self.attrs[attr] * T + k
-                                        for attr in attrs if attr in self.attrs]
-                            f[i,j,k].append((A + j) * self.nr_tags + k)
+        previous_idx = None
+        for i, item in enumerate(instance.raw):
+            tag, attrs = item
+            attrs = [self.attrs[attr] for attr in attrs if attr in self.attrs]
+            if i == 0:
+                for k in xrange(self.nr_tags):
+                    f[i,None,k] = [attr * self.nr_tags + k for attr in attrs]
+            else:
+                for j in xrange(self.nr_tags):
+                    for k in xrange(self.nr_tags):
+                        f[i,j,k] = [attr * self.nr_tags + k for attr in attrs]
+                        f[i,j,k].append((self.nr_attrs + j) * self.nr_tags + k)
 
-                if train:
-                    idx = self.tags[tag]
-                    for attr in attrs:
-                        F[self.attrs[attr] * T + idx] += 1
-                    if i > 0:
-                        F[(self.nr_attrs + previous_idx) * T + idx] += 1
-                    previous_idx = idx
+            if train:
+                idx = self.tags[tag]
+                for attr in attrs:
+                    F[attr * self.nr_tags + idx] += 1
+                if i > 0:
+                    F[(self.nr_attrs + previous_idx) * self.nr_tags + idx] += 1
+                previous_idx = idx
