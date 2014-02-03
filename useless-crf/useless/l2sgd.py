@@ -10,7 +10,7 @@ ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
 from useless.math import logsumexp
-from useless.instance import build_instance
+from useless.instance import build_instance, destroy_instance
 
 try:
     from numpy import array, zeros, exp, log, sqrt, add
@@ -66,7 +66,7 @@ def expectation(model, instance):
 
     return E
 
-def L2SGD(model,
+def l2sgd(model,
           instances,
           nr_epoth,
           init_learning_rate,
@@ -100,7 +100,6 @@ def L2SGD(model,
             if index % 1000 == 0:
                 print >> sys.stderr, "TRACE : %d instances is trained" % index
 
-            instance.features_table = None
-            instance.correct_features = None
+            destroy_instance(instance)
 
         print >> sys.stderr, "TRACE : Parameters norm %f" % norm(model.w)

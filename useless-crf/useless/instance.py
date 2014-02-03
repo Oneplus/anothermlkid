@@ -30,9 +30,10 @@ def build_instance(w, _attrs, _tags, instance, train=True):
     '''
     Build instance from raw instance
 
-    - param[in] w       the parameters vector
-    - param[in] attrs   dict of attributes
-    - param[in] tags    dict of tags
+    - param[in]     w           the parameters vector
+    - param[in]     attrs       dict of attributes
+    - param[in]     tags        dict of tags
+    - param[in/out] instance    the instance
     '''
     instance.features_table = f = {}
     instance.correct_features = F = defaultdict(int)
@@ -48,10 +49,10 @@ def build_instance(w, _attrs, _tags, instance, train=True):
             for k in xrange(T):
                 f[i,None,k] = [attr * T + k for attr in attrs]
         else:
-            for j in xrange(T):
-                for k in xrange(T):
-                    f[i,j,k] = [attr * T + k for attr in attrs]
-                    f[i,j,k].append((A + j) * T + k)
+            for k in xrange(T):
+                base = [attr * T + k for attr in attrs]
+                for j in xrange(T):
+                    f[i,j,k] = base + [(A + j) * T + k]
 
         if train:
             idx = _tags[tag]
@@ -60,3 +61,8 @@ def build_instance(w, _attrs, _tags, instance, train=True):
             if i > 0:
                 F[(A + previous_idx) * T + idx] += 1
             previous_idx = idx
+
+def destroy_instance(instance):
+    instance.features_table = None
+    instance.correct_features = None
+

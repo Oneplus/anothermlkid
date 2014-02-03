@@ -6,7 +6,8 @@ ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
 from useless.model import crfl2sgdmodel
-from useless.l2sgd import L2SGD
+from useless.l2sgd import l2sgd 
+from useless.lbfgs import lbfgs
 from useless.viterbi import viterbi
 from useless.instance import Instance
 
@@ -48,13 +49,14 @@ def learn(opts):
 
     for i in xrange(opts.epoth):
         if opts.algorithm == "l2sgd":
-            L2SGD(model              = m,
+            l2sgd(model              = m,
                   instances          = instances,
                   nr_epoth           = opts.cepoth,
                   init_learning_rate = opts.eta)
 
         elif opts.algorithm == "lbfgs":
-            lbfgs(instances)
+            lbfgs(model              = m,
+                  instances          = instances)
 
         if opts.dev_file:
             evaluate(m, opts.dev_file)

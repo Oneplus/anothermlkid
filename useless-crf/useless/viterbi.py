@@ -6,7 +6,7 @@ import sys
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
-from useless.instance import build_instance
+from useless.instance import build_instance, destroy_instance
 
 try:
     from numpy import array, zeros, exp, log
@@ -21,6 +21,7 @@ def viterbi(model, instance):
     model.destroy_score_cache()
     build_instance(model.w, model.attrs, model.tags, instance, False)
     g0, g = model.build_score_cache(instance)
+    destroy_instance(instance)
 
     L = len(instance)
     T = model.nr_tags
