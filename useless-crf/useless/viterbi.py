@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+import os
+import sys
+
+ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
+sys.path.append(ROOTDIR)
+
+from useless.instance import build_instance
+
 try:
     from numpy import array, zeros, exp, log
     from numpy.linalg import norm
@@ -11,7 +19,7 @@ def viterbi(model, instance):
     '''
     '''
     model.destroy_score_cache()
-    model.build_instance(instance, False)
+    build_instance(model.w, model.attrs, model.tags, instance, False)
     g0, g = model.build_score_cache(instance)
 
     L = len(instance)

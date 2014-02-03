@@ -9,18 +9,15 @@ from collections import defaultdict
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
+from useless.math import logsumexp
+from useless.instance import build_instance
+
 try:
     from numpy import array, zeros, exp, log, sqrt, add
     from numpy.linalg import norm
 except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
-
-def logsumexp(a):
-    '''
-    '''
-    max_element = a.max()
-    return max_element + log(exp(a - max_element).sum())
 
 #@profile
 def expectation(model, instance):
@@ -88,7 +85,7 @@ def L2SGD(model,
         for index, instance in enumerate(instances):
             # first need to clear the cache
             model.destroy_score_cache()
-            model.build_instance(instance)
+            build_instance(model.w, model.attrs, model.tags, instance)
 
             for k, v in expectation(model, instance).iteritems():
                 model.w[k] -= v * _gamma

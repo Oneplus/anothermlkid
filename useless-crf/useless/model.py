@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 import sys
+import os
+
+ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
+sys.path.append(ROOTDIR)
+
 from collections import defaultdict
 
 try:
@@ -80,32 +85,3 @@ class crfl2sgdmodel(object):
         self.nr_attrs = len(self.attrs)
         self.nr_dim = (self.nr_tags + self.nr_attrs) * self.nr_tags
         self.w = zeros(self.nr_dim, dtype=float)
-
-    def build_instance(self, instance, train=True):
-        instance.features_table = f = {}
-        instance.correct_features = F = defaultdict(int)
-
-        T = self.nr_tags
-        A = self.nr_attrs
-
-
-        previous_idx = None
-        for i, item in enumerate(instance.raw):
-            tag, attrs = item
-            attrs = [self.attrs[attr] for attr in attrs if attr in self.attrs]
-            if i == 0:
-                for k in xrange(self.nr_tags):
-                    f[i,None,k] = [attr * self.nr_tags + k for attr in attrs]
-            else:
-                for j in xrange(self.nr_tags):
-                    for k in xrange(self.nr_tags):
-                        f[i,j,k] = [attr * self.nr_tags + k for attr in attrs]
-                        f[i,j,k].append((self.nr_attrs + j) * self.nr_tags + k)
-
-            if train:
-                idx = self.tags[tag]
-                for attr in attrs:
-                    F[attr * self.nr_tags + idx] += 1
-                if i > 0:
-                    F[(self.nr_attrs + previous_idx) * self.nr_tags + idx] += 1
-                previous_idx = idx
