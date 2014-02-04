@@ -10,6 +10,7 @@ ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
 from useless.math import logsumexp
+from useless.viterbi import forward, backward
 from useless.instance import build_instance, destroy_instance
 
 try:
@@ -19,7 +20,6 @@ except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
 
-#@profile
 def expectation(model, instance):
     '''
     Perform forward-backward algorithm to calculate the second component
@@ -31,21 +31,8 @@ def expectation(model, instance):
     L = len(instance)
     T = model.nr_tags
 
-    # forward
-    # - exp{a[i,j]} = \sum k exp{a[i-1,k] + U[i,j] + B[k,j]}
-    # - a[i,j] = log \sum k exp{a[i-1,k] + U[i,j] + B[k,j]}
-    #          = U[i,j] + log \sum k exp{a[i-1,k] + B[k,j]}
-    a = zeros((L, T), dtype=float)
-    a[0,:] = g0
-    for i in xrange(1, L):
-        for o in xrange(T):
-            a[i,o] = logsumexp(a[i-1,:] + g[i,:,o])
-
-    # backward
-    b = zeros((L, T), dtype=float)
-    for i in xrange(L-2, -1, -1):
-        for o in xrange(T):
-            b[i,o] = logsumexp(b[i+1,:] + g[i+1,o,:])
+    a = forward(g0, g, L, T)
+    b = backward(g, L, T)
 
     logZ = logsumexp(a[L-1,:])
 

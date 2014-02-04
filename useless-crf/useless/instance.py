@@ -41,7 +41,6 @@ def build_instance(w, _attrs, _tags, instance, train=True):
     T = len(_tags)
     A = len(_attrs)
 
-    previous_idx = None
     for i, item in enumerate(instance.raw):
         tag, attrs = item
         attrs = [_attrs[attr] for attr in attrs if attr in _attrs]
@@ -54,13 +53,13 @@ def build_instance(w, _attrs, _tags, instance, train=True):
                 for j in xrange(T):
                     f[i,j,k] = base + [(A + j) * T + k]
 
-        if train:
-            idx = _tags[tag]
-            for attr in attrs:
-                F[attr * T + idx] += 1
-            if i > 0:
-                F[(A + previous_idx) * T + idx] += 1
-            previous_idx = idx
+    if train:
+        j, k = None, _tags[instance.raw[0][0]]
+        for e in f[0,None,k]: F[e] += 1
+        for i, item in enumerate(instance.raw[1:]):
+            j, k = k, _tags[item[0]]
+            for e in f[i+1,j,k]:
+                F[e] += 1
 
 def destroy_instance(instance):
     instance.features_table = None

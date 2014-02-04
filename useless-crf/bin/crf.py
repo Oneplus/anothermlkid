@@ -47,19 +47,24 @@ def learn(opts):
     print >> sys.stderr, "TRACE : number of instances %d" % len(instances)
     print >> sys.stderr, "TRACE : paramter dimision is %d" % m.nr_dim
 
-    for i in xrange(opts.epoth):
-        if opts.algorithm == "l2sgd":
+
+    if opts.algorithm == "l2sgd":
+        for i in xrange(opts.epoth):
             l2sgd(model              = m,
                   instances          = instances,
                   nr_epoth           = opts.cepoth,
                   init_learning_rate = opts.eta)
 
-        elif opts.algorithm == "lbfgs":
-            lbfgs(model              = m,
-                  instances          = instances)
+            if opts.dev_file:
+                evaluate(m, opts.dev_file)
+
+    elif opts.algorithm == "lbfgs":
+        lbfgs(model     = m,
+              instances = instances)
 
         if opts.dev_file:
             evaluate(m, opts.dev_file)
+
 
 if __name__=="__main__":
     from optparse import OptionParser

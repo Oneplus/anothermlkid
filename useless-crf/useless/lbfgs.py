@@ -15,13 +15,23 @@ except ImportError:
     sys.exit(1)
 
 from useless.math import logsumexp
+from useless.viterbi import forward, backward
 from useless.instance import build_instance, destroy_instance
+
+def trace(index):
+    if (index + 1) % 100 == 0:
+        print >> sys.stderr, "%4d" % (index + 1),
+        if (index + 1) % 1000 == 0:
+            print >> sys.stderr
 
 #@profile
 def likelihood(w, instances, model):
     T = model.nr_tags
     ret = 0.
+
     for index, instance in enumerate(instances):
+        trace(index)
+
         L = len(instance)
 
         # Filling the correct_features and features_table
@@ -34,55 +44,37 @@ def likelihood(w, instances, model):
         ret += array([w[k] * v for k, v in F.iteritems()]).sum()
 
         # calcualte the marginal
-        a = zeros((L, T), dtype=float)
-        a[0,:] = g0
-        for i in xrange(1, L):
-            for o in xrange(T):
-                a[i,o] = logsumexp(a[i-1,:] + g[i,:,o])
+        a = forward(g0, g, L, T)
 
-        logZ = logsumexp(a[L-1,:])
-
-        ret -= logZ
+        ret -= logsumexp(a[L-1,:])
 
         model.destroy_score_cache()
         destroy_instance(instance)
 
-    ret -= norm(w)
-    return ret
+    #print >> sys.stderr, ret
+    return -(ret - ((w ** 2).sum() / 2))
+
 
 #@profile
 def dlikelihood(w, instances, model):
-    grad = zeros(w.shape[0])
+    T = model.nr_tags
 
-    for instance in instances:
+    grad = zeros(w.shape[0], dtype=float)
+    for index, instance in enumerate(instances):
+        trace(index)
 
         L = len(instance)
-        T = model.nr_tags
-
         build_instance(w, model.attrs, model.tags, instance, True)
         g0, g = model.build_score_cache(instance)
-
-        # forward
-        # - exp{a[i,j]} = \sum k exp{a[i-1,k] + U[i,j] + B[k,j]}
-        # - a[i,j] = log \sum k exp{a[i-1,k] + U[i,j] + B[k,j]}
-        #          = U[i,j] + log \sum k exp{a[i-1,k] + B[k,j]}
 
         F = instance.correct_features
         for k, v in F.iteritems():
             grad[k] += v
 
         # forward
-        a = zeros((L, T), dtype=float)
-        a[0,:] = g0
-        for i in xrange(1, L):
-            for o in xrange(T):
-                a[i,o] = logsumexp(a[i-1,:] + g[i,:,o])
-
+        a = forward(g0, g, L, T)
         # backward
-        b = zeros((L, T), dtype=float)
-        for i in xrange(L-2, -1, -1):
-            for o in xrange(T):
-                b[i,o] = logsumexp(b[i+1,:] + g[i+1,o,:])
+        b = backward(g, L, T)
 
         logZ = logsumexp(a[L-1,:])
 
@@ -101,19 +93,15 @@ def dlikelihood(w, instances, model):
         model.destroy_score_cache()
         destroy_instance(instance)
 
-    grad -= w
-    return grad
+    return -(grad - w)
 
 def lbfgs(model, instances):
-
-    like = lambda x : -likelihood(x, instances, model)
-    dlike = lambda x : -dlikelihood(x, instances, model)
-
     def callback(xk):
         print >> sys.stderr, "TRACE : lbfgs training 1 iter done."
 
-    model.w, f, d = optimize.fmin_l_bfgs_b(like,
+    model.w, f, d = optimize.fmin_l_bfgs_b(likelihood,
                                            model.w,
-                                           fprime = dlike,
-                                           maxiter = 10,
+                                           fprime = dlikelihood,
+                                           args = (instances, model),
+                                           #iprint = 1,
                                            callback = callback)
