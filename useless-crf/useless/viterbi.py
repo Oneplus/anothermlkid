@@ -6,8 +6,9 @@ import sys
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
-from useless.math import logsumexp
-from useless.instance import build_instance, destroy_instance
+from useless.math       import logsumexp
+from useless.model      import build_score_cache
+from useless.instance   import build_instance, destroy_instance
 
 try:
     from numpy import array, zeros, exp, log
@@ -15,7 +16,6 @@ try:
 except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
-
 
 def forward(g0, g, L, T):
     '''
@@ -68,13 +68,13 @@ def argmax(g0, g, L, T):
 def viterbi(model, instance):
     '''
     '''
-    model.destroy_score_cache()
-    build_instance(model.w, model.attrs, model.tags, instance, False)
-    g0, g = model.build_score_cache(instance)
-    destroy_instance(instance)
-
     L = len(instance)
     T = model.nr_tags
+    A = model.nr_attrs
+
+    build_instance(model.w, model.attrs, model.tags, instance, False)
+    g0, g = build_score_cache(model.w, L, T, A, instance)
+    destroy_instance(instance)
 
     s, p = argmax(g0, g, L, T)
 

@@ -5,8 +5,9 @@ import os
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
+from useless.logger import INFO, WARN, ERROR, LOG, LOG2
 from useless.model import crfl2sgdmodel
-from useless.l2sgd import l2sgd 
+from useless.l2sgd import l2sgd
 from useless.lbfgs import lbfgs
 from useless.viterbi import viterbi
 from useless.instance import Instance
@@ -26,14 +27,16 @@ def evaluate(model, eval_file):
         nr_tags += len(instance)
 
     acc = float(nr_correct) / nr_tags
-    print >> sys.stderr, "TRACE : accuracy = %f (%d/%d)" % (acc, nr_correct, nr_tags)
+    LOG2(INFO, "accuracy = %f (%d/%d)" % (acc, nr_correct, nr_tags))
 
 
 def learn(opts):
     try:
         fp = open(opts.train_file, "r")
     except IOError:
-        print >> sys.stderr, "ERROR: Failed to open train file %s:" % opts.train_file
+        LOG(ERROR, "Failed to open train file %s:" % opts.train_file)
+        return
+    except:
         return
 
     m = crfl2sgdmodel()
@@ -42,11 +45,10 @@ def learn(opts):
 
     m.preprocess(instances)
 
-    print >> sys.stderr, "TRACE : number of tags %d" % m.nr_tags
-    print >> sys.stderr, "TRACE : number of attributes %d" % m.nr_attrs
-    print >> sys.stderr, "TRACE : number of instances %d" % len(instances)
-    print >> sys.stderr, "TRACE : paramter dimision is %d" % m.nr_dim
-
+    LOG(INFO, "number of tags %d" % m.nr_tags)
+    LOG(INFO, "number of attributes %d" % m.nr_attrs)
+    LOG(INFO, "number of instances %d" % len(instances))
+    LOG(INFO, "paramter dimision is %d" % m.nr_dim)
 
     if opts.algorithm == "l2sgd":
         for i in xrange(opts.epoth):
@@ -87,8 +89,15 @@ if __name__=="__main__":
     optparser.add_option("-c", "--cepoth", dest="cepoth",
                          help="specify training interval length",
                          type = int, default = 3)
+    optparser.add_option("-v", "--verbose", dest="verbose",
+                         action="store_true", default=False,
+                         help="verbose output")
 
     opts, args = optparser.parse_args()
+
+    if opts.verbose:
+        import useless.logger
+        useless.logger.__VERBOSE__ = True
 
     if len(args) == 0 or args[0] not in ["learn", "tag"]:
         print >> sys.stderr, "ERROR: command [learn/tag] must be specified.\n"

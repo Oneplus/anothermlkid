@@ -9,9 +9,11 @@ from collections import defaultdict
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
-from useless.math import logsumexp
-from useless.viterbi import forward, backward
-from useless.instance import build_instance, destroy_instance
+from useless.math       import logsumexp
+from useless.logger     import INFO, WARN, ERROR, LOG
+from useless.model      import build_score_cache
+from useless.viterbi    import forward, backward
+from useless.instance   import build_instance, destroy_instance
 
 try:
     from numpy import array, zeros, exp, log, sqrt, add
@@ -26,10 +28,11 @@ def expectation(model, instance):
     of the detrieve.
     '''
     # get the cached score
-    g0, g = model.build_score_cache(instance)
 
     L = len(instance)
     T = model.nr_tags
+    A = model.nr_attrs
+    g0, g = build_score_cache(model.w, L, T, A, instance)
 
     a = forward(g0, g, L, T)
     b = backward(g, L, T)
@@ -53,25 +56,31 @@ def expectation(model, instance):
 
     return E
 
+
+def tune_eta0(samples):
+    LOG(INFO, "Tuning eta0 from %d samples" % len(samples))
+
 def l2sgd(model,
           instances,
           nr_epoth,
           init_learning_rate,
           adjust_learning_rate = False):
 
-    _lambda = 1.
+    _sigma = 1.
     _gamma = init_learning_rate
     _t = 1.
 
+    _eta = 0.
+    samples = random.sample(instances, min(int(len(instances) * 0.1), 1000))
+
     for epoth in xrange(nr_epoth):
-        print >> sys.stderr, "TRACE : Training epoth [%d]" % epoth
-        # !NOTE randomly shuffle the training instances
+        LOG(INFO, "Training epoth [%d]" % epoth)
+        # randomly shuffle the training instances
         random.shuffle(instances)
 
         # loop over the training instances
         for index, instance in enumerate(instances):
             # first need to clear the cache
-            model.destroy_score_cache()
             build_instance(model.w, model.attrs, model.tags, instance)
 
             for k, v in expectation(model, instance).iteritems():
@@ -84,9 +93,10 @@ def l2sgd(model,
 
             _t += 1.
 
-            if index % 1000 == 0:
-                print >> sys.stderr, "TRACE : %d instances is trained" % index
+            if (index + 1) % 1000 == 0:
+                LOG(INFO, "%d instances is trained" % (index + 1))
 
             destroy_instance(instance)
 
-        print >> sys.stderr, "TRACE : Parameters norm %f" % norm(model.w)
+        LOG(INFO, "%d instances is trained" % (index + 1))
+        LOG(INFO, "Parameters norm %f" % norm(model.w))
