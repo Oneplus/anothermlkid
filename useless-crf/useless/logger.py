@@ -18,7 +18,7 @@ def LOG(lvl, msg):
         if lvl == INFO:
             logging.info(msg)
         elif lvl == WARN:
-            logging.warning(msg)
+            logging.warn(msg)
         elif lvl == ERROR:
             logging.error(msg)
 
@@ -26,7 +26,7 @@ def LOG2(lvl, msg):
     if lvl == INFO:
         logging.info(msg)
     elif lvl == WARN:
-        logging.warning(msg)
+        logging.warn(msg)
     elif lvl == ERROR:
         logging.error(msg)
 

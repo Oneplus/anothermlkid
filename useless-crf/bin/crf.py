@@ -3,10 +3,11 @@ import sys
 import os
 
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.append(ROOTDIR)
+if ROOTDIR not in sys.path:
+    sys.path.append(ROOTDIR)
 
 from useless.logger import INFO, WARN, ERROR, LOG, LOG2
-from useless.model import crfl2sgdmodel
+from useless.model import crfmodel
 from useless.l2sgd import l2sgd
 from useless.lbfgs import lbfgs
 from useless.viterbi import viterbi
@@ -29,7 +30,6 @@ def evaluate(model, eval_file):
     acc = float(nr_correct) / nr_tags
     LOG2(INFO, "accuracy = %f (%d/%d)" % (acc, nr_correct, nr_tags))
 
-
 def learn(opts):
     try:
         fp = open(opts.train_file, "r")
@@ -39,7 +39,7 @@ def learn(opts):
     except:
         return
 
-    m = crfl2sgdmodel()
+    m = crfmodel()
     instances = [Instance(c) for c in fp.read().strip().split("\n\n")]
     fp.close()
 
