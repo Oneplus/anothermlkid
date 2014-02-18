@@ -28,12 +28,6 @@ def lbfgs(model, instances):
                                            model.w,
                                            fprime = dlikelihood,
                                            args = (instances, model),
-                                           #iprint = 1,
+                                           iprint = 1,
+                                           factr = 1e12,
                                            callback = callback)
-    '''
-    model.w = optimize.fmin_bfgs(likelihood,
-                                 model.w,
-                                 fprime = dlikelihood,
-                                 args = (instances, model),
-                                 callback = callback)
-    '''

@@ -3,7 +3,8 @@ import sys
 import os
 
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.append(ROOTDIR)
+if ROOTDIR not in sys.path:
+    sys.path.append(ROOTDIR)
 
 import random
 from collections import defaultdict
@@ -11,15 +12,16 @@ from collections import defaultdict
 try:
     from numpy import array, zeros, exp, add, log
     from numpy.linalg import norm
+    from scipy.misc import logsumexp
 except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
 
-from useless.math       import logsumexp
+#from useless.maxent     import logsumexp
 from useless.logger     import INFO, WARN, ERROR, LOG, trace
 from useless.instance   import build_instance, destroy_instance
 
-DELTA = 2.
+DELTA = 1.
 
 class crfmodel(object):
     '''
@@ -71,20 +73,23 @@ def build_score_cache(w, L, T, A, instance):
     g0 = zeros(T, dtype=float)
     g = zeros((L, T, T), dtype=float)
 
-    f = instance.features_table
+    U = instance.unigram_features_table
+    B = instance.bigram_features_table
 
     for j in xrange(T):
-        g0[j] = w.take(f[0,None,j], axis=0).sum()
+        g0[j] = w.take(U[0,j], axis=0).sum()
 
     for i in xrange(1, L):
         for k in xrange(T):
-            g[i,0,k] = w.take(f[i,0,k], axis=0).sum()
-            for j in xrange(1, T):
-               g[i,j,k] = g[i,0,k] - w[A*T+ k] + w[(A+j)*T + k]
+            pv = w.take(U[i,k], axis=0).sum()
+            for j in xrange(T):
+               g[i,j,k] = pv + w[(A+j)*T + k]
 
     return (g0, g)
 
+
 from useless.viterbi    import forward, backward
+
 
 def _likelihood(w, instance, model):
     '''
@@ -99,7 +104,7 @@ def _likelihood(w, instance, model):
     A = model.nr_attrs
 
     # Filling the correct_features and features_table
-    build_instance(w, model.attrs, model.tags, instance, True)
+    build_instance(model.attrs, model.tags, instance, True)
     g0, g = build_score_cache(w, L, T, A, instance)
 
     # calcualte the correct likelihood
@@ -108,9 +113,10 @@ def _likelihood(w, instance, model):
 
     # calcualte the marginal
     a = forward(g0, g, L, T)
-    destroy_instance(instance)
+    #destroy_instance(instance)
 
     return ret - logsumexp(a[L-1,:])
+
 
 def likelihood(w, instances, model):
     '''
@@ -124,11 +130,12 @@ def likelihood(w, instances, model):
     ret = 0.
 
     for index, instance in enumerate(instances):
-        trace(index, N)
+        trace("Calculate likelihood", index, N)
         ret += _likelihood(w, instance, model)
 
-    return -(ret - ((w ** 2).sum() / 2 / (DELTA **2)))
+    return -(ret - ((w ** 2).sum() / (2 * DELTA **2)))
 
+#@profile
 def _dlikelihood(w, instance, model):
     '''
     Calculate gradient of a instance
@@ -143,7 +150,7 @@ def _dlikelihood(w, instance, model):
     T = model.nr_tags
     A = model.nr_attrs
 
-    build_instance(w, model.attrs, model.tags, instance, True)
+    build_instance(model.attrs, model.tags, instance, True)
     g0, g = build_score_cache(w, L, T, A, instance)
 
     F = instance.correct_features
@@ -155,19 +162,25 @@ def _dlikelihood(w, instance, model):
 
     logZ = logsumexp(a[L-1,:])
 
-    f = instance.features_table
+    U = instance.unigram_features_table
+    B = instance.bigram_features_table
 
     c = exp(g0 + b[0,:] - logZ).clip(0., 1.)
     for j in xrange(T):
-        grad[f[0,None,j]] -= c[j]
+        grad[U[0,j]] -= c[j]
 
     for i in xrange(1, L):
         c = exp(add.outer(a[i-1,:], b[i,:]) + g[i,:,:] - logZ).clip(0.,1.)
-        for j in range(T):
-            for k in range(T):
-                grad[f[i,j,k]] -= c[j,k]
+        # The following code is an equilism of this
+        #for j in range(T):
+        #    for k in range(T):
+        #        grad[U[i,k]] -= c[j,k]
+        #        grad[B[j,k]] -= c[j,k]
+        for k in range(T):
+            grad[U[i,k]] -= c[:,k].sum()
+        grad[range(A*T, (A+T)*T)] -= c.flatten()
 
-    destroy_instance(instance)
+    #destroy_instance(instance)
     return grad
 
 
@@ -181,10 +194,11 @@ def dlikelihood(w, instances, model):
 
     grad = zeros(w.shape[0], dtype=float)
     for index, instance in enumerate(instances):
-        trace(index, N)
+        trace("Calculate gradient", index, N)
         grad += _dlikelihood(w, instance, model)
 
     return -(grad - w / DELTA)
+
 
 def _gradient_test(w, instance, model, choosen_dims = None):
     '''
@@ -202,21 +216,23 @@ def _gradient_test(w, instance, model, choosen_dims = None):
     lossQ = _likelihood(w, instance, model)
     DlossQ = _dlikelihood(w, instance, model)
 
-    build_instance(w, model.attrs, model.tags, instance, True)
+    build_instance(model.attrs, model.tags, instance, True)
 
     L = len(instance)
     T = len(model.tags)
 
     if not choosen_dims:
-        f = instance.features_table
+        U = instance.unigram_features_table
+        B = instance.bigram_features_table
         features = []
         for i in range(L):
             for j in range(T):
                 if i == 0:
-                    features.extend(f[i,None,j])
+                    features.extend(U[i,j])
                 else:
                     for k in range(T):
-                        features.extend(f[i,k,j])
+                        features.extend(U[i,j].tolist())
+                        features.extend(B[k,j].tolist())
         choosen_dims = random.sample(features, 5)
 
     epsilon = 1e-4
@@ -235,6 +251,7 @@ def _gradient_test(w, instance, model, choosen_dims = None):
         LOG(INFO, "Success gradient test.")
 
     w[choosen_dims] -= epsilon
+
 
 def gradient_test(w, instances, model, choosen_dims = None):
     '''

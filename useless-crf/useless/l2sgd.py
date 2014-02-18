@@ -9,7 +9,7 @@ from collections import defaultdict
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
-from useless.math       import logsumexp
+from useless.maxent     import logsumexp
 from useless.logger     import INFO, WARN, ERROR, LOG
 from useless.model      import build_score_cache
 from useless.viterbi    import forward, backward

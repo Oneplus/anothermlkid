@@ -3,11 +3,12 @@ import sys
 import os
 
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.append(ROOTDIR)
+if ROOTDIR not in sys.path:
+    sys.path.append(ROOTDIR)
 
 try:
     from numpy import exp, log
-    from numpy.linalg import norm
+    import math
 except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
@@ -16,4 +17,4 @@ def logsumexp(a):
     '''
     '''
     max_element = a.max()
-    return max_element + log(exp(a - max_element).sum())
+    return max_element + math.log(exp(a - max_element).sum())

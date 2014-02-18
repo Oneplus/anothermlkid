@@ -6,7 +6,7 @@ import sys
 ROOTDIR = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.append(ROOTDIR)
 
-from useless.math       import logsumexp
+from useless.maxent     import logsumexp
 from useless.model      import build_score_cache
 from useless.instance   import build_instance, destroy_instance
 
@@ -52,6 +52,8 @@ def backward(g, L, T):
     return b
 
 def argmax(g0, g, L, T):
+    '''
+    '''
     s = zeros((L, T), dtype=float)
     p = zeros((L, T), dtype=int)
 
@@ -72,7 +74,7 @@ def viterbi(model, instance):
     T = model.nr_tags
     A = model.nr_attrs
 
-    build_instance(model.w, model.attrs, model.tags, instance, False)
+    build_instance(model.attrs, model.tags, instance, False)
     g0, g = build_score_cache(model.w, L, T, A, instance)
     destroy_instance(instance)
 

@@ -22,6 +22,7 @@ def LOG(lvl, msg):
         elif lvl == ERROR:
             logging.error(msg)
 
+
 def LOG2(lvl, msg):
     if lvl == INFO:
         logging.info(msg)
@@ -30,11 +31,17 @@ def LOG2(lvl, msg):
     elif lvl == ERROR:
         logging.error(msg)
 
-def trace(index, max_index = -1):
-    if __VERBOSE__:
-        if index + 1 == max_index:
-            print >> sys.stderr, "%4d" % max_index
-        elif (index + 1) % 100 == 0:
-            print >> sys.stderr, "%4d" % (index + 1),
-            if (index + 1) % 1000 == 0:
-                print >> sys.stderr
+
+def trace(msg, index, N):
+    if not __VERBOSE__:
+        return
+
+    percentage = (index + 1) * 100 / N
+
+    pp = index * 50 / N
+    bar = "%-20s |" % msg
+    bar += ("#" * pp) + (" " * (50 - pp)) + "|" + ("%3d%%" % percentage)
+    if index == N - 1:
+        sys.stderr.write(bar + "\r\n")
+    else:
+        sys.stderr.write(bar + "\r")
