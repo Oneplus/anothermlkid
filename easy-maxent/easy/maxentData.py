@@ -1,5 +1,6 @@
 class MaxentData(object):
     """
+    Data collections of the maxent model.
     """
     # read in instances from file
     # initialize the featureDict and labelDict at the same time
@@ -36,6 +37,7 @@ class MaxentData(object):
             self.instances.append((label, feats))
             self.N += len(feats)
 
+
     def debug(self):
         print "instance:"
         for inst in self.instances:
@@ -50,9 +52,11 @@ class MaxentData(object):
         for label in self.param:
             print "%s: %s" % (label, self.param[label].__str__())
 
+
     def f(self, label, feat):
         if feat in self.param and label in self.param[feat]: return 0
         else: return 1
+
 
     def p(self, label, feat):
         pass

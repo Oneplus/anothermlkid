@@ -44,18 +44,23 @@ class GISTrainer(object):
 
                     # apply Gaussian prior smoothing
                     if self.sigma2 > 0.0:
-                        inc = self._newton(expection[f][c], observation[f][c], data.param[f][c], self.eps)
+                        inc = self._newton(expection[f][c],
+                                           observation[f][c],
+                                           data.param[f][c],
+                                           self.eps)
                     # GIS ?
                     elif self.alpha > 0.0:
                         if observation[f][c] - self.alpha <= 0.0:
                             continue
 
-                        inc = (math.log(observation[f][c]-self.alpha)-math.log(observation[f][c]))/self.C
+                        inc = (math.log(observation[f][c]-self.alpha)
+                                -math.log(observation[f][c]))/self.C
                         if data.param[f][c] + inc <= 0.0:
                             inc = -data.param[f][c]
                     # Standard GIS
                     else:
-                        inc = (math.log(observation[f][c])-math.log(observation[f][c]))/self.C
+                        inc = (math.log(observation[f][c])
+                                -math.log(observation[f][c]))/self.C
 
                     data.param[f][c] += inc
 
@@ -84,6 +89,7 @@ class GISTrainer(object):
                     C += 1
             maxC = max(maxC, C)
         return maxC
+
 
     # calculate the model expection
     #   E_{p}f_{i}=\sum_{x,y}\widetilde{p}(x)p(y|x)f_{i}(x,y)
@@ -123,6 +129,7 @@ class GISTrainer(object):
             loglikelihood+=math.log(prob[label])
         return (loglikelihood, expection)
 
+
     # calculate empirical expection
     #   E_{\widetitle{p}}f_{i}=\sum_{x,y}\widetitle{p}(x,y)f_i(x,y)
     # where
@@ -140,6 +147,7 @@ class GISTrainer(object):
                     observation[f][label]=0.0
                 observation[f][label]+=1.0
         return observation
+
 
     #
     #   $ E_{\title{p}}f_i=E_pf_ie^{C\delta_i}+frac{\lambda_i+\delta_i}{\sigma_i^2}
@@ -165,6 +173,7 @@ class GISTrainer(object):
 
         print >> sys.stderr, "ERROR: newtown method failed."
         raise NumberError("newtown method failed.")
+
 
 if __name__=="__main__":
     print >> sys.stderr, "library is not runnable."
