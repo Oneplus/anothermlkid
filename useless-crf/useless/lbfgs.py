@@ -13,7 +13,7 @@ except ImportError:
     sys.exit(1)
 
 from useless.logger import INFO, LOG
-from useless.model import likelihood, dlikelihood, gradient_test
+from useless.model import likelihood_and_dlikelihood_batch, gradient_test
 
 def lbfgs(model, instances):
     '''
@@ -24,9 +24,8 @@ def lbfgs(model, instances):
         LOG(INFO, "Gradient test starts: ")
         gradient_test(model.w, instances, model)
 
-    model.w, f, d = optimize.fmin_l_bfgs_b(likelihood,
+    model.w, f, d = optimize.fmin_l_bfgs_b(likelihood_and_dlikelihood_batch,
                                            model.w,
-                                           fprime = dlikelihood,
                                            args = (instances, model),
                                            iprint = 1,
                                            factr = 1e12,

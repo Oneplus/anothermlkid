@@ -36,13 +36,21 @@ class Instance(object):
     def __len__(self):
         return len(self.raw)
 
+
 def build_instance(_attrs, _tags, instance, train=True):
     '''
     Build instance from raw instance
 
-    - param[in]     attrs       dict of attributes
-    - param[in]     tags        dict of tags
-    - param[in/out] instance    the instance
+    Parameters
+    ----------
+    _attrs : dict
+        dict of attributes
+    _tags : dict
+        dict of tags
+    instance : Instance
+        the instance
+    train : bool
+        If train is true, also extract the correct features
     '''
     if (instance.unigram_features_table is not None and
             instance.bigram_features_table is not None):
@@ -74,7 +82,16 @@ def build_instance(_attrs, _tags, instance, train=True):
             for e in chain(U[i+1,k].tolist(), B[j,k].tolist()):
                 F[e] += 1
 
+
 def destroy_instance(instance):
+    '''
+    Set the pre-calculated feature table to None
+
+    Parameters
+    ----------
+    instance : Instance
+        The instance
+    '''
     instance.unigram_features_table = None
     instance.bigram_features_table = None
     instance.correct_features = None

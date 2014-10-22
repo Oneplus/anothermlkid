@@ -12,12 +12,11 @@ from collections import defaultdict
 try:
     from numpy import array, zeros, exp, add, log
     from numpy.linalg import norm
-    from scipy.misc import logsumexp
 except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
 
-#from useless.maxent     import logsumexp
+from useless.maxent     import logsumexp
 from useless.logger     import INFO, WARN, ERROR, LOG, trace
 from useless.instance   import build_instance, destroy_instance
 
@@ -82,8 +81,9 @@ def build_score_cache(w, L, T, A, instance):
     for i in xrange(1, L):
         for k in xrange(T):
             pv = w.take(U[i,k], axis=0).sum()
-            for j in xrange(T):
-               g[i,j,k] = pv + w[(A+j)*T + k]
+            g[i,:,k] = pv + w[range(A*T+k, A*T+T*T+k, T)]
+            #for j in xrange(T):
+            #   g[i,j,k] = pv + w[(A+j)*T + k]
 
     return (g0, g)
 
@@ -113,7 +113,6 @@ def _likelihood(w, instance, model):
 
     # calcualte the marginal
     a = forward(g0, g, L, T)
-    #destroy_instance(instance)
 
     return ret - logsumexp(a[L-1,:])
 
@@ -135,7 +134,7 @@ def likelihood(w, instances, model):
 
     return -(ret - ((w ** 2).sum() / (2 * DELTA **2)))
 
-#@profile
+
 def _dlikelihood(w, instance, model):
     '''
     Calculate gradient of a instance
@@ -180,7 +179,6 @@ def _dlikelihood(w, instance, model):
             grad[U[i,k]] -= c[:,k].sum()
         grad[range(A*T, (A+T)*T)] -= c.flatten()
 
-    #destroy_instance(instance)
     return grad
 
 
@@ -198,6 +196,80 @@ def dlikelihood(w, instances, model):
         grad += _dlikelihood(w, instance, model)
 
     return -(grad - w / DELTA)
+
+
+def _likelihood_and_dlikelihood_batch(w, instance, model):
+    '''
+    Batchly calculate likelihood and gradient of a instance
+
+    - param[in] w           The weight vector
+    - param[in] instance    The instance
+    - param[in] model       The model
+    '''
+    f, grad = 0., zeros(w.shape[0], dtype=float)
+
+    L = len(instance)
+    T = model.nr_tags
+    A = model.nr_attrs
+
+    build_instance(model.attrs, model.tags, instance, True)
+    g0, g = build_score_cache(w, L, T, A, instance)
+
+    F = instance.correct_features
+    for k, v in F.iteritems():
+        grad[k] += v
+        f += w[k] * v
+
+    a = forward(g0, g, L, T)    # forward
+    b = backward(g, L, T)       # backward
+
+    logZ = logsumexp(a[L-1,:])
+
+    U = instance.unigram_features_table
+    B = instance.bigram_features_table
+
+    c = exp(g0 + b[0,:] - logZ).clip(0., 1.)
+    for j in xrange(T):
+        grad[U[0,j]] -= c[j]
+
+    for i in xrange(1, L):
+        c = exp(add.outer(a[i-1,:], b[i,:]) + g[i,:,:] - logZ).clip(0.,1.)
+        for k in range(T):
+            grad[U[i,k]] -= c[:,k].sum()
+        grad[range(A*T, (A+T)*T)] -= c.flatten()
+
+    return f-logZ, grad
+
+
+def likelihood_and_dlikelihood_batch(w, instances, model):
+    '''
+    Batchly calculate the likelihood and gradient of the likelihood
+
+    Parameters
+    ----------
+    w : float vector
+        The parameters
+    instances : list of instance
+        A list of instance to train the model
+    model : crfmodel
+        The model
+
+    Returns
+    -------
+    f, grad : tuple
+        A tuple with two objects. F is the likelihood and grad is the
+        gradient for likelihood
+    '''
+    N = len(instances)
+
+    f, grad = 0., zeros(w.shape[0], dtype=float)
+    for index, instance in enumerate(instances):
+        trace("Calculate batch", index, N)
+        delta_f, delta_grad = _likelihood_and_dlikelihood_batch(w, instance, model)
+        f += delta_f
+        grad += delta_grad
+
+    return -(f-((w**2).sum()/(2*DELTA))), -(grad-(w/DELTA))
 
 
 def _gradient_test(w, instance, model, choosen_dims = None):

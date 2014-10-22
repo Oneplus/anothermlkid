@@ -2,6 +2,9 @@
 import sys
 import math
 
+def msg(s):
+    print >> sys.stderr, s
+
 class GISTrainer(object):
     def __init__(self, _maxIter, _sigma2, _tol, _alpha):
         self.maxIter = _maxIter
@@ -24,16 +27,16 @@ class GISTrainer(object):
 
         prelikelihood = -1e10
 
-        print >> sys.stderr, ""
-        print >> sys.stderr, "Starting GIS iterations ..."
-        print >> sys.stderr, "Number of Predicates: %d" % len(data.param)
-        print >> sys.stderr, "Number of Outcomes:   %d" % len(data.labelDict)
-        print >> sys.stderr, "Number of Parameters: %d" % 0
-        print >> sys.stderr, "Tolerance:            %f" % self.eps
-        print >> sys.stderr, "Gassian Penalty:      %s" % ("on" if self.sigma2 > 0.0 else "off")
-        print >> sys.stderr, ""
-        print >> sys.stderr, "iters   loglikelihood   training accuracy   heldout accuracy"
-        print >> sys.stderr, "============================================================"
+        msg("")
+        msg("Starting GIS iterations ...")
+        msg("Number of Predicates: %d" % len(data.param))
+        msg("Number of Outcomes:   %d" % len(data.labelDict))
+        msg("Number of Parameters: %d" % 0)
+        msg("Tolerance:            %f" % self.eps)
+        msg("Gassian Penalty:      %s" % ("on" if self.sigma2 > 0.0 else "off"))
+        msg("")
+        msg("iters   loglikelihood   training accuracy   heldout accuracy")
+        msg("============================================================")
 
         for it in xrange(self.maxIter):
             likelihood, expection = self._cal_Ep(data)
@@ -64,7 +67,7 @@ class GISTrainer(object):
 
                     data.param[f][c] += inc
 
-            print >> sys.stderr, "%-7d %-16f" % (it+1, likelihood)
+            msg("%-7d %-16f" % (it+1, likelihood))
             #for f in data.param:
             #    print f, data.param[f]
 
@@ -163,7 +166,7 @@ class GISTrainer(object):
             fpval = t * self.C + self.n / self.sigma2
 
             if fpval == 0:
-                print >> sys.stderr, "WARNING: zero-division encounter in newtown() method"
+                msg("WARNING: zero-division encounter in newtown() method")
                 return x0
 
             x = x0 - fval / fpval
@@ -171,9 +174,9 @@ class GISTrainer(object):
                 return x
             x0 = x
 
-        print >> sys.stderr, "ERROR: newtown method failed."
+        msg("ERROR: newtown method failed.")
         raise NumberError("newtown method failed.")
 
 
 if __name__=="__main__":
-    print >> sys.stderr, "library is not runnable."
+    msg("library is not runnable.")

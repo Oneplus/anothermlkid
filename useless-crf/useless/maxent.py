@@ -15,6 +15,12 @@ except ImportError:
 
 def logsumexp(a):
     '''
+    Logsumexp
+    ---------
+
+    It is a little faster than the scipy.misc.logsumexp
+
+    - param[in] array-like
     '''
     max_element = a.max()
     return max_element + math.log(exp(a - max_element).sum())

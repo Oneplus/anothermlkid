@@ -17,15 +17,26 @@ except ImportError:
     print >> sys.stderr, "numpy is not installed"
     sys.exit(1)
 
+
 def forward(g0, g, L, T):
     '''
-    forward
-    -------
+    The forward process of forward-backward algorithm.
 
-    - param[in] g0  \Phi(0,None,k)
-    - param[in] g   \Phi(i,j,k)
-    - param[in] L   length of instance
-    - param[in] T   number of tags
+    Parameters
+    ----------
+    g0 : array of T
+        $\Phi(0,None,k)$
+    g : array of L*T*T
+        $\Phi(i,j,k)$
+    L : int
+        length of instance
+    T : int
+        number of tags
+
+    Returns
+    -------
+    a : array of L*T
+        The forward process matrix
     '''
     a = zeros((L, T), dtype=float)
     a[0,:] = g0
@@ -35,14 +46,24 @@ def forward(g0, g, L, T):
             a[i,o] = logsumexp(ap + g[i,:,o])
     return a
 
+
 def backward(g, L, T):
     '''
-    backward
-    --------
+    The backward process of forward-backward algorithm.
 
-    - param[in] g   \Phi(i,j,k)
-    - param[in] L   length of instance
-    - param[in] T   number of tags
+    Parameters
+    ----------
+    g : array of L*T*T
+        $\Phi(i,j,k)$
+    L : int
+        length of instance
+    T : int
+        number of tags
+
+    Returns
+    -------
+    b : array of L*T
+        The forward process matrix
     '''
     b = zeros((L, T), dtype=float)
     for i in xrange(L-2, -1, -1):
@@ -51,8 +72,16 @@ def backward(g, L, T):
             b[i,o] = logsumexp(bp + g[i+1,o,:])
     return b
 
+
 def argmax(g0, g, L, T):
     '''
+    argmax
+    ------
+
+    - param[in] g0
+    - param[in] g
+    - param[in] L
+    - param[in] T
     '''
     s = zeros((L, T), dtype=float)
     p = zeros((L, T), dtype=int)
@@ -66,6 +95,7 @@ def argmax(g0, g, L, T):
             p[i,t] = (s[i-1,] + g[i,:,t]).argmax()
 
     return s, p
+
 
 def viterbi(model, instance):
     '''
